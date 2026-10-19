@@ -102,3 +102,63 @@ Furthermore, the Airflow_Lab2_Flask DAG facilitates the management of a Flask AP
 
 Overall, this project demonstrates the power of Apache Airflow in orchestrating complex workflows and integrating external systems seamlessly. By following the provided instructions and understanding the workflow's structure, users can leverage Airflow to streamline their machine learning pipelines and enhance operational efficiency.
 
+
+
+---
+
+# Airflow Lab 2: Model Arena
+
+## Project Overview
+Extended the original Apache Airflow advertising prediction pipeline into an automated model competition and champion selection system.
+
+## Original Modifications
+
+1. Added Random Forest and Gradient Boosting alongside Logistic Regression.
+2. Implemented automatic champion selection using validation F1-score.
+3. Added a validation split for comparing candidate models.
+4. Added accuracy, precision, recall, and F1 evaluation.
+5. Retrained and saved the selected champion model.
+6. Generated leaderboard.json containing model comparisons.
+7. Created a new Flask dashboard at /leaderboard.
+8. Removed duplicate feature scaling.
+9. Updated Docker Compose configuration for persistent model artifacts.
+
+## Model Comparison
+
+| Model | Validation Accuracy | Validation F1 |
+|---|---|---|
+| Logistic Regression | 96.57% | 96.51% |
+| Gradient Boosting | 96.57% | 96.47% |
+| Random Forest | 95.43% | 95.29% |
+
+## Champion Model
+
+Selected Model: Logistic Regression
+
+Selection Metric: Validation F1-score
+
+Held-out Test Accuracy: 97.00%
+
+Held-out Test F1-score: 97.05%
+
+## Key Finding
+
+Logistic Regression narrowly outperformed Gradient Boosting on validation F1-score, showing that more complex models do not always deliver better performance.
+
+## Running the Project
+
+1. Start Docker Desktop.
+2. From Lab_2, run `docker compose up airflow-init` for first-time initialization.
+3. Run `docker compose up -d`.
+4. Open http://localhost:8080.
+5. Trigger Airflow_Lab2.
+6. Review model/leaderboard.json.
+7. Open http://localhost:5555/leaderboard after the Flask DAG starts.
+
+## Technologies
+
+Apache Airflow 3.1.0, Docker Compose, Flask, scikit-learn, Python.
+
+## Source
+
+Adapted from Professor Ramin Mohammadi's MLOps Airflow Lab 2.

@@ -92,7 +92,7 @@ trigger_dag_task = TriggerDagRunOperator(
     conf={"message": "Data from upstream DAG"},
     reset_dag_run=False,
     wait_for_completion=False,          # don't block
-    trigger_rule=TriggerRule.ALL_DONE,  # still run even if something upstream fails
+    trigger_rule=TriggerRule.ALL_SUCCESS,  # still run even if something upstream fails
     dag=dag,
 )
 

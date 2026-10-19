@@ -1,0 +1,10 @@
+.env
+logs/
+plugins/
+config/
+working_data/
+model/*.sav
+model/write_test
+__pycache__/
+*.pyc
+.DS_Store

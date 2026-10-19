@@ -1,0 +1,29 @@
+{
+  "champion": "Logistic Regression",
+  "selection_metric": "validation F1-score",
+  "leaderboard": [
+    {
+      "model": "Logistic Regression",
+      "accuracy": 0.9657,
+      "precision": 0.9651,
+      "recall": 0.9651,
+      "f1_score": 0.9651
+    },
+    {
+      "model": "Gradient Boosting",
+      "accuracy": 0.9657,
+      "precision": 0.9762,
+      "recall": 0.9535,
+      "f1_score": 0.9647
+    },
+    {
+      "model": "Random Forest",
+      "accuracy": 0.9543,
+      "precision": 0.9643,
+      "recall": 0.9419,
+      "f1_score": 0.9529
+    }
+  ],
+  "test_accuracy": 0.97,
+  "test_f1_score": 0.9705
+}

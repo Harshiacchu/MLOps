@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Arena | MLOps Lab 2</title>
+<style>
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:40px}
+main{max-width:950px;margin:auto}
+h1{font-size:32px}
+.card{background:#1e293b;padding:24px;border-radius:14px;margin:22px 0}
+.champion{color:#4ade80;font-size:26px;font-weight:bold}
+table{width:100%;border-collapse:collapse;margin-top:18px}
+th,td{padding:14px;text-align:left;border-bottom:1px solid #475569}
+th{color:#93c5fd}
+tr:first-child td{color:#4ade80;font-weight:bold}
+.metric{display:inline-block;margin-right:35px;font-size:20px}
+a{color:#93c5fd}
+</style>
+</head>
+<body>
+<main>
+<h1>Model Arena</h1>
+<p>Automated ML Model Competition and Champion Selection</p>
+
+<section class="card">
+<h2>Champion Model</h2>
+<div class="champion">{{ results.champion }}</div>
+<p>Selected using {{ results.selection_metric }}</p>
+<div class="metric">Test Accuracy: {{ "%.2f"|format(results.test_accuracy * 100) }}%</div>
+<div class="metric">Test F1: {{ "%.2f"|format(results.test_f1_score * 100) }}%</div>
+</section>
+
+<section class="card">
+<h2>Model Leaderboard</h2>
+<table>
+<thead>
+<tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-score</th></tr>
+</thead>
+<tbody>
+{% for model in results.leaderboard %}
+<tr>
+<td>{{ "🏆 " if loop.first else "" }}{{ model.model }}</td>
+<td>{{ "%.2f"|format(model.accuracy * 100) }}%</td>
+<td>{{ "%.2f"|format(model.precision * 100) }}%</td>
+<td>{{ "%.2f"|format(model.recall * 100) }}%</td>
+<td>{{ "%.2f"|format(model.f1_score * 100) }}%</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+
+<p><a href="http://localhost:8080">Open Airflow</a></p>
+</main>
+</body>
+</html>

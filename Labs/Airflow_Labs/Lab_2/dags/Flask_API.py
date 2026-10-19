@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import os
 import time
 import base64
@@ -94,6 +96,20 @@ def success():
 def failure():
     _, info = get_latest_run_info()
     return render_template("failure.html", **info)
+
+
+@app.route("/leaderboard")
+def model_leaderboard():
+    results_path = "/opt/airflow/model/leaderboard.json"
+
+    try:
+        with open(results_path, "r") as f:
+            results = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"error": "Model results unavailable"}, 503
+
+    return render_template("leaderboard.html", results=results)
+
 
 @app.route("/health")
 def health():

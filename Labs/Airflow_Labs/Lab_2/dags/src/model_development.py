@@ -1,11 +1,14 @@
-# File: src/model_development.py
 import os
 import pickle
+import json
 import pandas as pd
 from sklearn.compose import make_column_transformer
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler
+
 
 WORKING_DIR = "/opt/airflow/working_data"
 MODEL_DIR = "/opt/airflow/model"
@@ -56,7 +59,6 @@ def data_preprocessing(file_path: str) -> str:
     ]
 
     ct = make_column_transformer(
-        (MinMaxScaler(), num_columns),
         (StandardScaler(), num_columns),
         remainder="passthrough",
     )
@@ -76,19 +78,83 @@ def separate_data_outputs(file_path: str) -> str:
     return file_path
 
 def build_model(file_path: str, filename: str) -> str:
-    """
-    Train LR model and save to MODEL_DIR/filename. Returns model path.
-    """
+    """Train three models, select a champion using validation F1, and save results."""
     with open(file_path, "rb") as f:
         X_train, X_test, y_train, y_test = pickle.load(f)
 
-    model = LogisticRegression()
-    model.fit(X_train, y_train)
+    X_fit, X_val, y_fit, y_val = train_test_split(
+        X_train, y_train,
+        test_size=0.25,
+        random_state=42,
+        stratify=y_train,
+    )
+
+    candidates = {
+        "Logistic Regression": LogisticRegression(max_iter=1000),
+        "Random Forest": RandomForestClassifier(
+            n_estimators=100, random_state=42
+        ),
+        "Gradient Boosting": GradientBoostingClassifier(
+            random_state=42
+        ),
+    }
+
+    leaderboard = []
+    best_name = None
+    best_f1 = -1
+
+    for name, model in candidates.items():
+        model.fit(X_fit, y_fit)
+        predictions = model.predict(X_val)
+
+        metrics = {
+            "model": name,
+            "accuracy": round(float(accuracy_score(y_val, predictions)), 4),
+            "precision": round(float(precision_score(
+                y_val, predictions, zero_division=0
+            )), 4),
+            "recall": round(float(recall_score(
+                y_val, predictions, zero_division=0
+            )), 4),
+            "f1_score": round(float(f1_score(
+                y_val, predictions, zero_division=0
+            )), 4),
+        }
+
+        leaderboard.append(metrics)
+
+        if metrics["f1_score"] > best_f1:
+            best_f1 = metrics["f1_score"]
+            best_name = name
+
+    leaderboard.sort(key=lambda item: item["f1_score"], reverse=True)
+
+    champion = candidates[best_name]
+    champion.fit(X_train, y_train)
 
     model_path = os.path.join(MODEL_DIR, filename)
-    with open(model_path, "wb") as f:
-        pickle.dump(model, f)
 
+    with open(model_path, "wb") as f:
+        pickle.dump(champion, f)
+
+    test_predictions = champion.predict(X_test)
+
+    results = {
+        "champion": best_name,
+        "selection_metric": "validation F1-score",
+        "leaderboard": leaderboard,
+        "test_accuracy": round(float(
+            accuracy_score(y_test, test_predictions)
+        ), 4),
+        "test_f1_score": round(float(
+            f1_score(y_test, test_predictions, zero_division=0)
+        ), 4),
+    }
+
+    with open(os.path.join(MODEL_DIR, "leaderboard.json"), "w") as f:
+        json.dump(results, f, indent=2)
+
+    print(json.dumps(results, indent=2))
     return model_path
 
 def load_model(file_path: str, filename: str) -> int:
@@ -102,8 +168,17 @@ def load_model(file_path: str, filename: str) -> int:
     with open(model_path, "rb") as f:
         model = pickle.load(f)
 
-    score = model.score(X_test, y_test)
-    print(f"Model score on test data: {score}")
-
     pred = model.predict(X_test)
+
+    metrics = {
+        "accuracy": accuracy_score(y_test, pred),
+        "precision": precision_score(y_test, pred, zero_division=0),
+        "recall": recall_score(y_test, pred, zero_division=0),
+        "f1_score": f1_score(y_test, pred, zero_division=0),
+    }
+
+    print("Model Evaluation Results:")
+    for metric, value in metrics.items():
+        print(f"{metric}: {value:.4f}")
+
     return int(pred[0])

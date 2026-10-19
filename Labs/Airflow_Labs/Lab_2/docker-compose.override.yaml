@@ -1,0 +1,20 @@
+services:
+  airflow-worker:
+    environment:
+      PYTHONPATH: /opt/airflow/dags
+      _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./working_data:/opt/airflow/working_data
+      - ./model:/opt/airflow/model
+
+  airflow-scheduler:
+    environment:
+      PYTHONPATH: /opt/airflow/dags
+      _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
+
+  airflow-dag-processor:
+    environment:
+      PYTHONPATH: /opt/airflow/dags
+      _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
