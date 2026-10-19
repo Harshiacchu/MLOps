@@ -46,7 +46,7 @@ for our lab assuming you have a gmail account you can use the following setting:
    - smtp_timeout = 30
    - smtp_retry_limit = 5
 
-After updating the SMTP information, Airflow will use the configured SMTP server to send email notifications.
+SMTP settings above describe the original lab's optional email configuration. Email notifications are not enabled in this implementation.
 
 
 ## DAG Structure
@@ -111,6 +111,15 @@ Overall, this project demonstrates the power of Apache Airflow in orchestrating 
 ## Project Overview
 Extended the original Apache Airflow advertising prediction pipeline into an automated model competition and champion selection system.
 
+## Implementation Status
+
+- Main ML DAG executed successfully in the local Docker environment.
+- Three candidate models were evaluated and a champion selected.
+- Flask Model Arena dashboard was tested locally.
+- SMTP email notifications are disabled.
+- Flask runs as a dedicated Docker service; the Flask DAG performs a health check.
+- Fresh-clone execution has not yet been independently verified.
+
 ## Original Modifications
 
 1. Added Random Forest and Gradient Boosting alongside Logistic Regression.
@@ -151,9 +160,9 @@ Logistic Regression narrowly outperformed Gradient Boosting on validation F1-sco
 2. From Lab_2, run `docker compose up airflow-init` for first-time initialization.
 3. Run `docker compose up -d`.
 4. Open http://localhost:8080.
-5. Trigger Airflow_Lab2.
+5. Trigger `Airflow_Lab2` in the Airflow UI.
 6. Review model/leaderboard.json.
-7. Open http://localhost:5555/leaderboard after the Flask DAG starts.
+7. The dedicated `flask-dashboard` Docker service provides the dashboard at http://localhost:5555/leaderboard. The `Airflow_Lab2_Flask` DAG checks its health.
 
 ## Technologies
 
@@ -162,3 +171,22 @@ Apache Airflow 3.1.0, Docker Compose, Flask, scikit-learn, Python.
 ## Source
 
 Adapted from Professor Ramin Mohammadi's MLOps Airflow Lab 2.
+
+## Execution Evidence
+
+The following screenshots were captured from the local Docker environment after running the project.
+
+### Successful ML Pipeline
+
+![Successful Airflow ML pipeline](screenshots/airflow-main-success.png)
+
+### Flask DAG Execution
+
+The latest Flask DAG run succeeded. Earlier failed attempts remain visible in the historical run overview.
+
+![Airflow Flask DAG run history](screenshots/airflow-flask-runs.png)
+
+### Model Arena Dashboard
+
+![Model competition dashboard](screenshots/model-arena.png)
+

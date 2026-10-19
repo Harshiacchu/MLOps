@@ -3,8 +3,6 @@ services:
     environment:
       PYTHONPATH: /opt/airflow/dags
       _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
-    ports:
-      - "5555:5555"
     volumes:
       - ./working_data:/opt/airflow/working_data
       - ./model:/opt/airflow/model
@@ -18,3 +16,29 @@ services:
     environment:
       PYTHONPATH: /opt/airflow/dags
       _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
+
+  airflow-init:
+    volumes:
+      - ./working_data:/opt/airflow/working_data
+      - ./model:/opt/airflow/model
+
+  flask-dashboard:
+    image: apache/airflow:3.1.0
+    user: "${AIRFLOW_UID:-50000}:0"
+    environment:
+      PYTHONPATH: /opt/airflow/dags
+      _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
+      AIRFLOW_WEBSERVER: http://airflow-apiserver:8080
+    command:
+      - bash
+      - -c
+      - python -c "from Flask_API import app; app.run(host='0.0.0.0', port=5555, debug=False, use_reloader=False)"
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./dags:/opt/airflow/dags:ro
+      - ./model:/opt/airflow/model:ro
+    depends_on:
+      airflow-apiserver:
+        condition: service_healthy
+    restart: unless-stopped

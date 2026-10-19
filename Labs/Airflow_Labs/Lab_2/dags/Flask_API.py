@@ -137,8 +137,14 @@ dag = DAG(
     is_paused_upon_creation=False,
 )
 
+def check_flask_dashboard():
+    response = requests.get("http://flask-dashboard:5555/health", timeout=15)
+    response.raise_for_status()
+    print("Flask dashboard is healthy")
+
+
 PythonOperator(
-    task_id="start_Flask_API",
-    python_callable=start_flask_app,
+    task_id="check_Flask_API",
+    python_callable=check_flask_dashboard,
     dag=dag,
 )
