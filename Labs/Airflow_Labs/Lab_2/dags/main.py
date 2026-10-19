@@ -1,6 +1,7 @@
 # File: main.py
 from __future__ import annotations
 
+import os
 import pendulum
 from airflow import DAG
 from airflow.providers.standard.operators.bash import BashOperator
@@ -17,10 +18,60 @@ from src.model_development import (
     load_model,
 )
 
+
+# ---------- Notification callbacks ----------
+def notify_success(context):
+    """Record task success; EmailOperator handles completion emails."""
+    task_id = context["task_instance"].task_id
+    print(f"Task succeeded: {task_id}")
+
+
+def notify_failure(context):
+    """Send a failure alert only to the configured SMTP account."""
+    import smtplib
+    from email.message import EmailMessage
+
+    sender = os.environ.get("AIRFLOW__SMTP__SMTP_USER")
+    recipient = os.environ.get("AIRFLOW__SMTP__SMTP_MAIL_FROM")
+    password = os.environ.get("AIRFLOW__SMTP__SMTP_PASSWORD")
+
+    if not ENABLE_EMAIL or not all([sender, recipient, password]):
+        print("Failure email skipped: notifications not configured")
+        return
+
+    if sender.strip().lower() != recipient.strip().lower():
+        raise ValueError("Failure notification blocked: recipient mismatch")
+
+    task_instance = context["task_instance"]
+
+    message = EmailMessage()
+    message["Subject"] = "Airflow Lab 2 - Task Failed"
+    message["From"] = sender
+    message["To"] = recipient
+    message.set_content(
+        f"DAG: {task_instance.dag_id}\n"
+        f"Task: {task_instance.task_id}\n"
+        f"Run: {context['run_id']}\n"
+        f"State: failed\n"
+    )
+
+    with smtplib.SMTP("smtp.gmail.com", 587, timeout=20) as smtp:
+        smtp.starttls()
+        smtp.login(sender, password)
+        smtp.send_message(
+            message,
+            from_addr=sender,
+            to_addrs=[recipient],
+        )
+
+    print("Failure notification sent to configured account")
+
+
 # ---------- Default args ----------
 default_args = {
     "start_date": pendulum.datetime(2024, 1, 1, tz="UTC"),
     "retries": 0,
+    "on_failure_callback": notify_failure,
 }
 
 # ---------- DAG ----------
@@ -43,13 +94,23 @@ owner_task = BashOperator(
     dag=dag,
 )
 
-# send_email = EmailOperator(
-#     task_id="send_email",
-#     to="rey.mhmmd@gmail.com",
-#     subject="Notification from Airflow",
-#     html_content="<p>This is a notification email sent from Airflow.</p>",
-#     dag=dag,
-# )
+# Email notifications use only the locally configured address.
+# Disabled by default until SMTP delivery is explicitly tested.
+EMAIL_RECIPIENT = os.getenv("AIRFLOW__SMTP__SMTP_USER")
+ENABLE_EMAIL = os.getenv("ENABLE_LAB2_EMAIL", "false").lower() == "true"
+
+if ENABLE_EMAIL:
+    if not EMAIL_RECIPIENT:
+        raise ValueError("Email enabled but SMTP recipient is missing")
+
+    send_email = EmailOperator(
+        task_id="send_email",
+        to=EMAIL_RECIPIENT,
+        subject="Airflow Lab 2 - Pipeline Completed",
+        html_content="<p>Airflow Lab 2 model training completed successfully.</p>",
+        dag=dag,
+    )
+
 
 load_data_task = PythonOperator(
     task_id="load_data_task",
@@ -100,3 +161,6 @@ trigger_dag_task = TriggerDagRunOperator(
 owner_task >> load_data_task >> data_preprocessing_task >> \
     separate_data_outputs_task >> build_save_model_task >> \
     load_model_task >> trigger_dag_task
+
+if ENABLE_EMAIL:
+    load_model_task >> send_email

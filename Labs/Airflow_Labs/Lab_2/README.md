@@ -46,7 +46,7 @@ for our lab assuming you have a gmail account you can use the following setting:
    - smtp_timeout = 30
    - smtp_retry_limit = 5
 
-SMTP settings above describe the original lab's optional email configuration. Email notifications are not enabled in this implementation.
+SMTP settings above describe the original lab's optional email configuration. Email notifications were tested successfully using the configured Gmail SMTP account.
 
 
 ## DAG Structure
@@ -55,7 +55,7 @@ SMTP settings above describe the original lab's optional email configuration. Em
 This DAG orchestrates a machine learning pipeline and notification system. Let's break down each function within this DAG:
 
 1. **`notify_success(context)` and `notify_failure(context)` Functions:**
-   - These functions define email notifications for task success and failure, respectively. They utilize the `EmailOperator` to send emails with predefined content and subject to a specified recipient (in this case, `rey.mhmmd@gmail.com`).
+   - The success callback logs task completion, while the failure callback sends a notification. The separate `send_email` EmailOperator sends the pipeline completion email (using the locally configured sender/recipient account).
 
 2. **`default_args` Dictionary:**
    - This dictionary defines default arguments for the DAG, including the start date and the number of retries in case of task failure.
@@ -67,13 +67,13 @@ This DAG orchestrates a machine learning pipeline and notification system. Let's
    - This task echoes `1` and is assigned to an owner (`Ramin Mohammadi`). It represents a simple demonstration task with a linked owner.
 
 5. **`send_email` EmailOperator:**
-   - This task sends a notification email upon DAG completion. It utilizes the `notify_success` and `notify_failure` functions as callbacks for success and failure, respectively.
+   - The `send_email` EmailOperator sends a successful completion notification. A separate `notify_failure(context)` callback handles task-failure alerts. Both were tested.
 
 6. **PythonOperator Tasks:**
    - These tasks execute Python functions (`load_data`, `data_preprocessing`, `separate_data_outputs`, `build_model`, `load_model`) representing different stages of a machine learning pipeline. They perform data loading, preprocessing, model building, and model loading tasks.
 
 7. **`TriggerDagRunOperator` Task:**
-   - This task triggers the `Airflow_Lab2_Flask` DAG upon successful completion of the main DAG. It ensures that the Flask API is launched after the machine learning pipeline completes successfully.
+   - This task triggers the `Airflow_Lab2_Flask` DAG upon successful completion of the main DAG. It triggers a health check of the separately running Flask dashboard after successful pipeline completion.
 
 ### `Airflow_Lab2_Flask`
 This DAG manages the Flask API's lifecycle and consists of the following function:
@@ -91,7 +91,7 @@ This DAG manages the Flask API's lifecycle and consists of the following functio
    - This function starts the Flask server, enabling users to access the API endpoints.
 
 5. **`start_flask_API` PythonOperator:**
-   - This task executes the `start_flask_app()` function to initiate the Flask server. It represents the starting point for the Flask API's lifecycle.
+   - In this implementation, the `check_Flask_API` PythonOperator verifies the dedicated Flask Docker service. Docker starts the server independently.
 
 ## Conclusion
 In this project, we've constructed a robust workflow using Apache Airflow to orchestrate a machine learning pipeline and manage a Flask API for monitoring purposes. The Airflow_Lab2 DAG coordinates various tasks, including data loading, preprocessing, model building, and email notification upon completion. By leveraging PythonOperators and BashOperator, we've encapsulated each step of the machine learning process, allowing for easy scalability and maintenance.
@@ -116,7 +116,7 @@ Extended the original Apache Airflow advertising prediction pipeline into an aut
 - Main ML DAG executed successfully in the local Docker environment.
 - Three candidate models were evaluated and a champion selected.
 - Flask Model Arena dashboard was tested locally.
-- SMTP email notifications are disabled.
+- SMTP email notifications are implemented and tested using Airflow's EmailOperator.
 - Flask runs as a dedicated Docker service; the Flask DAG performs a health check.
 - Fresh-clone execution has not yet been independently verified.
 
@@ -172,6 +172,32 @@ Apache Airflow 3.1.0, Docker Compose, Flask, scikit-learn, Python.
 
 Adapted from Professor Ramin Mohammadi's MLOps Airflow Lab 2.
 
+## SMTP Email Notifications
+
+The ML DAG includes an `EmailOperator` task named `send_email`, which runs after successful model training and evaluation.
+
+### Secure Configuration
+
+Gmail SMTP uses port 587 with STARTTLS.
+
+The following variables must be configured locally in the ignored `.env` file:
+
+- `SMTP_EMAIL`: Gmail sender and recipient
+- `SMTP_APP_PASSWORD`: Google app password
+- `AIRFLOW_CONN_SMTP_DEFAULT`: Airflow SMTP connection URI
+
+The Docker Compose override references these variables without storing actual credentials.
+
+Email notifications are disabled by default unless `ENABLE_LAB2_EMAIL` is enabled. The recipient is restricted to the configured SMTP account.
+
+The registered failure callback was invoked with a simulated task failure, and its email was received. No production task was deliberately failed.
+
+### Execution Verification
+
+The complete Airflow DAG executed successfully with all eight tasks green, including `send_email`.
+
+![Successful DAG execution with SMTP email task](screenshots/airflow-email-success.png)
+
 ## Execution Evidence
 
 The following screenshots were captured from the local Docker environment after running the project.
@@ -189,4 +215,51 @@ The latest Flask DAG run succeeded. Earlier failed attempts remain visible in th
 ### Model Arena Dashboard
 
 ![Model competition dashboard](screenshots/model-arena.png)
+
+## Quick Start and Environment Setup
+
+### 1. Configure the environment
+
+Create a `.env` file inside `Lab_2` if one does not already exist.
+
+Set `AIRFLOW_UID=50000` on macOS. On Linux, use your UID from `id -u`.
+
+Email notifications are optional. Set `ENABLE_LAB2_EMAIL=false` to run the pipeline without Gmail credentials.
+
+To enable notifications, configure these variables in your private `.env`:
+
+- `ENABLE_LAB2_EMAIL=true`
+- `SMTP_EMAIL` with your Gmail account
+- `SMTP_APP_PASSWORD` with your Google app password
+- `AIRFLOW_CONN_SMTP_DEFAULT` with a valid Airflow SMTP connection URI
+
+Never commit `.env` or your credentials.
+
+### 2. Start the project
+
+Run the following commands from `Lab_2`:
+
+1. `docker compose config --quiet`
+2. `docker compose up airflow-init`
+3. `docker compose up -d`
+
+Open Airflow at http://localhost:8080.
+
+### 3. Run the ML pipeline
+
+Enable `Airflow_Lab2` in the Airflow UI if it is paused, then trigger it manually.
+
+The pipeline loads and preprocesses data, trains three models, selects the best one using validation F1-score, saves the model, and triggers `Airflow_Lab2_Flask`.
+
+### 4. View the results
+
+Open http://localhost:5555/leaderboard to see the model comparison dashboard.
+
+The Flask server runs as a dedicated Docker service. The Flask DAG checks its health rather than starting a second Flask server.
+
+### 5. Email notifications
+
+When SMTP is enabled, a successful pipeline sends an email through `send_email`. The registered `notify_failure` callback sends an email when a task fails.
+
+Both email delivery paths were verified locally. The failure notification was tested using a simulated failure context.
 

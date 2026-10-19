@@ -2,6 +2,17 @@ services:
   airflow-worker:
     environment:
       PYTHONPATH: /opt/airflow/dags
+      AIRFLOW_CONN_SMTP_DEFAULT: ${AIRFLOW_CONN_SMTP_DEFAULT}
+      ENABLE_LAB2_EMAIL: ${ENABLE_LAB2_EMAIL:-false}
+      AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
+      AIRFLOW__SMTP__SMTP_PORT: "587"
+      AIRFLOW__SMTP__SMTP_STARTTLS: "True"
+      AIRFLOW__SMTP__SMTP_SSL: "False"
+      AIRFLOW__SMTP__SMTP_USER: ${SMTP_EMAIL}
+      AIRFLOW__SMTP__SMTP_PASSWORD: ${SMTP_APP_PASSWORD}
+      AIRFLOW__SMTP__SMTP_MAIL_FROM: ${SMTP_EMAIL}
+      AIRFLOW__SMTP__SMTP_TIMEOUT: "30"
+      AIRFLOW__SMTP__SMTP_RETRY_LIMIT: "5"
       _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
     volumes:
       - ./working_data:/opt/airflow/working_data
@@ -10,11 +21,18 @@ services:
   airflow-scheduler:
     environment:
       PYTHONPATH: /opt/airflow/dags
+      AIRFLOW_CONN_SMTP_DEFAULT: ${AIRFLOW_CONN_SMTP_DEFAULT}
+      ENABLE_LAB2_EMAIL: ${ENABLE_LAB2_EMAIL:-false}
+      AIRFLOW__SMTP__SMTP_USER: ${SMTP_EMAIL}
       _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
 
   airflow-dag-processor:
     environment:
       PYTHONPATH: /opt/airflow/dags
+      ENABLE_LAB2_EMAIL: ${ENABLE_LAB2_EMAIL:-false}
+      AIRFLOW__SMTP__SMTP_USER: ${SMTP_EMAIL}
+      AIRFLOW__SMTP__SMTP_MAIL_FROM: ${SMTP_EMAIL}
+      AIRFLOW__SMTP__SMTP_PASSWORD: ${SMTP_APP_PASSWORD}
       _PIP_ADDITIONAL_REQUIREMENTS: 'pandas scikit-learn flask requests'
 
   airflow-init:
