@@ -1,0 +1,16 @@
+feature,importance
+alcohol,0.115
+volatile_acidity,0.0255
+chlorides,0.02
+alcohol_x_sulphates,0.0177
+density,0.0145
+citric_acid,0.0128
+pH,0.0125
+free_so2_ratio,0.011
+residual_sugar,0.0101
+total_sulfur_dioxide,0.0074
+free_sulfur_dioxide,0.0072
+sulphates,0.0052
+acidity_total,0.0023
+fixed_acidity,0.0018
+is_red,0.0007

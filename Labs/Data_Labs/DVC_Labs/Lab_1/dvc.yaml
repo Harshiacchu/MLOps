@@ -1,0 +1,54 @@
+stages:
+  prepare:
+    cmd: python3 src/prepare.py
+    deps:
+      - src/prepare.py
+      - data/raw/wine.csv
+    params:
+      - prepare
+    outs:
+      - data/processed
+    metrics:
+      - metrics/data_report.json:
+          cache: false
+
+  train:
+    cmd: python3 src/train.py
+    deps:
+      - src/train.py
+      - data/processed/train.csv
+    params:
+      - train
+    outs:
+      - models/model.joblib
+
+  evaluate:
+    cmd: python3 src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - models/model.joblib
+      - data/processed/test.csv
+    params:
+      - evaluate
+    metrics:
+      - metrics/scores.json:
+          cache: false
+    plots:
+      - plots/confusion.csv:
+          cache: false
+          template: confusion
+          x: actual
+          y: predicted
+      - plots/roc.csv:
+          cache: false
+          x: fpr
+          y: tpr
+      - plots/prc.csv:
+          cache: false
+          x: recall
+          y: precision
+      - plots/feature_importance.csv:
+          cache: false
+          template: bar_horizontal
+          x: importance
+          y: feature

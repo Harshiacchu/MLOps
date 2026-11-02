@@ -1,0 +1,9 @@
+{
+  "model": "logistic_regression",
+  "accuracy": 0.7293,
+  "precision": 0.3925,
+  "recall": 0.7772,
+  "f1": 0.5216,
+  "roc_auc": 0.8154,
+  "avg_precision": 0.464
+}

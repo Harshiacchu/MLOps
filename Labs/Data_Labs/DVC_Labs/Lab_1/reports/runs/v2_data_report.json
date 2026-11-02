@@ -1,0 +1,10 @@
+{
+  "rows_raw": 6497,
+  "rows_dropped_na": 0,
+  "rows_dropped_duplicates": 1177,
+  "rows_clean": 5320,
+  "n_features": 15,
+  "positive_rate": 0.1897,
+  "train_rows": 4256,
+  "test_rows": 1064
+}

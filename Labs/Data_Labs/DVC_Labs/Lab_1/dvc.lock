@@ -1,0 +1,106 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python3 src/prepare.py
+    deps:
+    - path: data/raw/wine.csv
+      hash: md5
+      md5: ea2baa6730c01e8502c72548c933388a
+      size: 415035
+    - path: src/prepare.py
+      hash: md5
+      md5: 9a470394e223903780a3186bbdf9eb7e
+      size: 2260
+    params:
+      params.yaml:
+        prepare:
+          quality_threshold: 7
+          test_size: 0.2
+          seed: 42
+          clip_quantiles:
+          - 0.005
+          - 0.995
+    outs:
+    - path: data/processed
+      hash: md5
+      md5: 1fe97afc6a2aa35199bbee1db79beb90.dir
+      size: 520067
+      nfiles: 2
+    - path: metrics/data_report.json
+      hash: md5
+      md5: f1330ed0d87f64431a09781ca1a248d8
+      size: 193
+  train:
+    cmd: python3 src/train.py
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: c379627b166f60eaba281a16e430d980
+      size: 415873
+    - path: src/train.py
+      hash: md5
+      md5: 6bf009d18bc1c5c03ceed7546c1cae51
+      size: 1652
+    params:
+      params.yaml:
+        train:
+          seed: 42
+          model: random_forest
+          random_forest:
+            n_estimators: 300
+            max_depth: 12
+            min_samples_leaf: 2
+            class_weight: balanced
+          gradient_boosting:
+            n_estimators: 300
+            learning_rate: 0.05
+            max_depth: 3
+            subsample: 0.8
+          logistic_regression:
+            C: 1.0
+            class_weight: balanced
+    outs:
+    - path: models/model.joblib
+      hash: md5
+      md5: 3c614fef30887fea93b2e4082fafc0f6
+      size: 13790896
+  evaluate:
+    cmd: python3 src/evaluate.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 637e68489106d39592e00e0f482c9a59
+      size: 104194
+    - path: models/model.joblib
+      hash: md5
+      md5: 3c614fef30887fea93b2e4082fafc0f6
+      size: 13790896
+    - path: src/evaluate.py
+      hash: md5
+      md5: 82e8e427887db031d3845a1b81606190
+      size: 2139
+    params:
+      params.yaml:
+        evaluate:
+          decision_threshold: 0.5
+    outs:
+    - path: metrics/scores.json
+      hash: md5
+      md5: f9b646024dc599ab9fde41d86d0cf724
+      size: 158
+    - path: plots/confusion.csv
+      hash: md5
+      md5: 9bf8e39fe8b09a828c42b9e699cd1af8
+      size: 4273
+    - path: plots/feature_importance.csv
+      hash: md5
+      md5: 12d9e2315cc3ca1306808b7002806016
+      size: 314
+    - path: plots/prc.csv
+      hash: md5
+      md5: 29c61d25d6e9fc1c6eccb5d7d2c4696d
+      size: 14018
+    - path: plots/roc.csv
+      hash: md5
+      md5: b994a92c28914daee2c69916e4069599
+      size: 3218

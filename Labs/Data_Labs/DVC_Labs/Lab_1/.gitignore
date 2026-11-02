@@ -1,3 +1,9 @@
 DVC_Lab/
 *.dvcignore
 *.json
+!metrics/*.json
+!reports/runs/*.json
+.venv/
+__pycache__/
+dvc_storage/
+dvc_plots/

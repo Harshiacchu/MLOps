@@ -1,0 +1,25 @@
+prepare:
+  quality_threshold: 7        # quality >= 7 is labelled a "good" wine
+  test_size: 0.2
+  seed: 42
+  clip_quantiles: [0.005, 0.995]
+
+train:
+  seed: 42
+  model: random_forest        # random_forest | gradient_boosting | logistic_regression
+  random_forest:
+    n_estimators: 300
+    max_depth: 12
+    min_samples_leaf: 2
+    class_weight: balanced
+  gradient_boosting:
+    n_estimators: 300
+    learning_rate: 0.05
+    max_depth: 3
+    subsample: 0.8
+  logistic_regression:
+    C: 1.0
+    class_weight: balanced
+
+evaluate:
+  decision_threshold: 0.5
